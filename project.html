@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Xfinity sign‑in flow • replica</title>
+    <!-- Font & basic styling (no external UI libs) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: white;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* main card – replicates the clean xfinity white container */
+        .flow-card {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            margin: 0 auto;
+            padding: 2rem;
+            transition: opacity 0.2s;
+        }
+
+        /* logo placeholder (exact space) */
+        .logo-placeholder {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 1.5rem;
+            padding: 0 20px;
+        }
+
+        .logo-box {
+            width: 140px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            color: #666;
+            font-style: oblique;
+            font-weight: 500;
+            font-size: 250%;
+            letter-spacing: 0.3px;
+            opacity: 0.8;
+        }
+
+        /* Screen visibility - FIXED: Only one screen shows at a time */
+        .screen {
+            display: none !important;
+        }
+
+        .screen.active {
+            display: flex !important;
+        }
+
+        /* screen1 specific layout */
+        #screen1.active {
+            flex-direction: row;
+            gap: 60px;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        /* screen2 and screen4 layout */
+        #screen2.active,
+        #screen4.active {
+            flex-direction: column;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* sign in form container */
+        .signin-container {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        /* promo banner container */
+        .promo-container {
+            flex: 1;
+            max-width: 500px;
+            display: block;
+        }
+
+        .screen-title {
+            font-size: 2.3rem;
+            letter-spacing: .8px;
+            font-weight: 600;
+            line-height: 1.2;
+            color: #090216;
+            margin-bottom: 1rem;
+        }
+
+        .screen-sub {
+            color: #1c1e1f;
+            font-size: 1.2rem;
+            margin-bottom: 1.75rem;
+            border-left: 3px solid #0a0a0b;
+            padding-left: 0.75rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1f3a57;
+            margin-bottom: 0.4rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1rem;
+            background: #f8fafd;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.15s;
+            color: #04233e;
+        }
+
+        .input-field:focus {
+            border-color: #5e22c8;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(94, 34, 200, 0.15);
+        }
+
+        .input-field.error {
+            border-color: #c92127;
+            background: #fff7f7;
+        }
+
+        .error-message {
+            color: #c0272b;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+            padding-left: 1rem;
+            font-weight: 500;
+        }
+
+        .legal-note {
+            font-size: 1rem;
+            color: #1a1a1a;
+            margin: 0 0 24px 0;
+        }
+
+        .text-link {
+            background: none;
+            border: none;
+            color: #5e22c8;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .primary-btn {
+            background: #5e22c8;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 1.2rem 2.2rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+            width: 100%;
+            max-width: 200px;
+            margin-bottom: 1.5rem;
+        }
+
+        .primary-btn:hover {
+            background: #4a1ba0;
+        }
+
+        .alt-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .alt-link {
+            background: none;
+            border: none;
+            color: #070310;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+            width: 100%;
+            border-bottom: 1px solid #e2e9f2;
+        }
+
+        .alt-link span {
+            color: #5e22c8;
+            font-size: 1.2rem;
+        }
+
+        .row-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+            width: 100%;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1f3a57;
+            font-size: 0.95rem;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: #5e22c8;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .code-expire {
+            font-size: 0.85rem;
+            color: #04111e;
+            margin: 0.5rem 0 1.5rem;
+        }
+
+        .resend-row {
+            display: flex;
+            justify-content: flex-end;
+            margin: 0.5rem 0;
+            width: 100%;
+        }
+
+        /* PROMO BANNER */
+        .promo-banner {
+            background: linear-gradient(135deg, #7B4BF6 0%, #9B7CFA 100%);
+            border-radius: 36px;
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .promo-banner::before,
+        .promo-banner::after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .promo-banner::before {
+            left: -50px;
+        }
+
+        .promo-banner::after {
+            right: -50px;
+        }
+
+        .promo-banner h2 {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            z-index: 2;
+            max-width: 300px;
+        }
+
+        .phone-mockup {
+            width: 80px;
+            height: 160px;
+            background: linear-gradient(145deg, #8A5CF7 0%, #6A3CE7 100%);
+            border-radius: 16px;
+            border: 3px solid #333;
+            box-shadow: inset 2px 0 8px rgba(255, 255, 255, 0.3),
+                8px 8px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            margin-bottom: 20px;
+        }
+
+        .phone-mockup::before {
+            content: 'X';
+            color: white;
+            font-size: 42px;
+            font-weight: 300;
+            font-family: sans-serif;
+        }
+
+        .promo-banner p {
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            z-index: 2;
+            max-width: 300px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .calculate-btn {
+            background: white;
+            color: #5e22c8;
+            border: none;
+            border-radius: 40px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 30px;
+            cursor: pointer;
+            z-index: 2;
+            transition: transform 0.2s;
+        }
+
+        .calculate-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Footer styles */
+        .footer-links {
+            padding: 32px 20px 0;
+            text-align: center;
+            margin-top: 40px;
+            border-top: 1px solid #e2e9f2;
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .footer-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            padding: 0;
+        }
+
+        .footer-nav a {
+            color: #2b2b2b;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-nav a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-nav svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Media Queries */
+        @media (max-width: 900px) {
+            #screen1.active {
+                gap: 40px;
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            #screen1.active {
+                flex-direction: column;
+                gap: 30px;
+                align-items: center;
+            }
+
+            .signin-container {
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .promo-container {
+                max-width: 100%;
+                width: 100%;
+                display: block;
+            }
+
+            .footer-nav {
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .flow-card {
+                padding: 1rem;
+            }
+
+            .promo-container {
+                display: none;
+            }
+
+            .signin-container {
+                max-width: 100%;
+            }
+
+            .screen-title {
+                font-size: 1.8rem;
+            }
+
+            .footer-nav {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+
+            #screen2.active,
+            #screen4.active {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flow-card">
+        <!-- logo placeholder (same on every screen) -->
+        <div class="logo-placeholder">
+    <img src="xfinity001.png" alt="Xfinity" class="logo-image" style="height: 48px; width: auto;">
+</div>
+
+        <!-- SCREEN 1 – Sign in with Xfinity ID + Promo Banner -->
+        <div id="screen1" class="screen active">
+            <!-- Sign in form container -->
+            <div class="signin-container">
+                <h1 class="screen-title">Sign in with your Xfinity ID</h1>
+                <div class="input-group">
+                    <input type="text" id="usernameInput" class="input-field" placeholder="Email, mobile, or username"
+                        autocomplete="off">
+                    <div id="usernameError" class="error-message"></div>
+                </div>
+                <p class="legal-note">By signing in, you agree to our <a href="#" class="text-link">Terms of Service</a> and <a href="#" class="text-link">Privacy Policy</a>.</p>
+                <button class="primary-btn" id="goToPasswordBtn">Let's go</button>
+                <div class="alt-options">
+                    <button class="alt-link" id="findXfinityId">Find your Xfinity ID
+                        <span>></span>
+                    </button>
+                    <button class="alt-link" id="createXfinityId">Create a new Xfinity ID
+                        <span>></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Promo banner container -->
+            <!-- Replace the existing promo-banner div with this -->
+<div class="promo-container">
+    <img src="whazzkid01.jpg" alt="Xfinity Mobile promo" style="width: 100%; max-width: 500px; border-radius: 36px;">
+</div>
+        </div>
+
+        <!-- SCREEN 2 – Password Entry -->
+        <div id="screen2" class="screen">
+            <div class="screen-sub" id="displayUsername">user@example.com</div>
+            <div class="input-group">
+                <label class="input-label">Enter your password</label>
+                <input type="password" id="passwordInput" class="input-field" placeholder="••••••••" value="">
+                <div id="passwordError" class="error-message"></div>
+            </div>
+            <div class="row-flex">
+                <label class="checkbox-item">
+                    <input type="checkbox" checked> Keep me signed in
+                </label>
+                <button class="link-btn" id="forgotPasswordLink">Forgot password?</button>
+            </div>
+            <button class="primary-btn" id="signInPasswordBtn">Sign in</button>
+            <div style="margin: 1.5rem 0 0.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="alt-link" id="backToUserBtn" style="border-bottom: none; padding: 0;">← Sign in as someone else</button>
+                <button class="alt-link" id="troubleSigninLink" style="border-bottom: none; padding: 0;">Trouble signing in?</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4 – Verification Code -->
+        <div id="screen4" class="screen">
+            <h2 class="screen-title">Verify your mobile number</h2>
+            <div class="code-expire">Enter the code sent to *******3928. Expires in 15 minutes.</div>
+            <div class="input-group">
+                <label class="input-label">Verification code</label>
+                <input type="text" id="codeInput" class="input-field" placeholder="e.g. 123456" inputmode="numeric"
+                    maxlength="8">
+                <div id="codeError" class="error-message"></div>
+            </div>
+            <div class="resend-row">
+                <button class="link-btn" id="resendCodeBtn">Resend code</button>
+            </div>
+            <label class="checkbox-item" style="margin: 1rem 0 1.5rem;">
+                <input type="checkbox"> Don't ask me again in this browser
+            </label>
+            <button class="primary-btn" id="verifyCodeBtn">Verify</button>
+
+            <div class="alt-options" style="margin-top: 2rem;">
+                <button class="alt-link" id="usePushInstead">Use Push Notification instead <span>></span></button>
+                <button class="alt-link" id="useCodeGenerator">Use Code Generator instead <span>></span></button>
+                <button class="alt-link" id="emailCodeInstead">Email a code instead <span>></span></button>
+                <button class="alt-link" id="backToPasswordBtn" style="margin-top: 1rem; border-bottom: none;">← Back to password</button>
+            </div>
+        </div>
+
+        <!-- footer (same on all screens) -->
+        <footer class="footer-links">
+            <p class="copyright">© 2026 Comcast</p>
+            <ul class="footer-nav">
+                <li><a href="#">Web Terms Of Service</a></li>
+                <li><a href="#">CA Notice at Collection</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Your Privacy Choices</a></li>
+                <li><a href="#">Health Privacy Notice</a></li>
+                <li><a href="#">Ad Choices</a></li>
+            </ul>
+        </footer>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded - initializing multi-page flow');
+            
+            // Get all screen elements
+            const screen1 = document.getElementById('screen1');
+            const screen2 = document.getElementById('screen2');
+            const screen4 = document.getElementById('screen4');
+            
+            // Get all interactive elements
+            const usernameInput = document.getElementById('usernameInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const codeInput = document.getElementById('codeInput');
+            
+            const goToPasswordBtn = document.getElementById('goToPasswordBtn');
+            const backToUserBtn = document.getElementById('backToUserBtn');
+            const backToPasswordBtn = document.getElementById('backToPasswordBtn');
+            const signInPasswordBtn = document.getElementById('signInPasswordBtn');
+            const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+            const resendCodeBtn = document.getElementById('resendCodeBtn');
+            
+            // Error message elements
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+            const codeError = document.getElementById('codeError');
+            
+            // Display username span
+            const displayUsernameSpan = document.getElementById('displayUsername');
+
+            // Function to show only one screen
+            function showScreen(screenToShow) {
+                console.log('Showing screen:', screenToShow.id);
+                
+                // Hide all screens
+                [screen1, screen2, screen4].forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                // Show the requested screen
+                screenToShow.classList.add('active');
+            }
+
+            // SCREEN 1 -> SCREEN 2: Go to password page
+            if (goToPasswordBtn) {
+                goToPasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Navigating to password screen');
+                    
+                    const username = usernameInput ? usernameInput.value.trim() : '';
+                    
+                    if (!username) {
+                        if (usernameError) usernameError.innerText = 'Email, mobile or username required';
+                        if (usernameInput) usernameInput.classList.add('error');
+                    } else {
+                        if (usernameError) usernameError.innerText = '';
+                        if (usernameInput) usernameInput.classList.remove('error');
+                        
+                        // Update the username display on screen 2
+                        if (displayUsernameSpan) {
+                            displayUsernameSpan.innerText = username;
+                        }
+                        
+                        // Go to password screen
+                        showScreen(screen2);
+                    }
+                });
+            }
+
+            // SCREEN 2 -> SCREEN 1: Back to sign in as someone else
+            if (backToUserBtn) {
+                backToUserBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Going back to sign in screen');
+                    showScreen(screen1);
+                });
+            }
+
+            // SCREEN 4 -> SCREEN 2: Back to password
+            if (backToPasswordBtn) {
+                backToPasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Going back to password screen');
+                    showScreen(screen2);
+                });
+            }
+
+            // SCREEN 2 -> SCREEN 4: Password entered, go to verification
+            if (signInPasswordBtn) {
+                signInPasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Validating password and going to verification');
+                    
+                    const password = passwordInput ? passwordInput.value : '';
+                    
+                    if (!password) {
+                        if (passwordError) passwordError.innerText = 'Password cannot be empty';
+                        if (passwordInput) passwordInput.classList.add('error');
+                    } else {
+                        if (passwordError) passwordError.innerText = '';
+                        if (passwordInput) passwordInput.classList.remove('error');
+                        
+                        // Clear any previous code error
+                        if (codeError) codeError.innerText = '';
+                        if (codeInput) codeInput.value = '';
+                        
+                        // Go to verification screen
+                        showScreen(screen4);
+                    }
+                });
+            }
+
+            // SCREEN 4: Verify code
+            if (verifyCodeBtn) {
+                verifyCodeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Verifying code');
+                    
+                    const code = codeInput ? codeInput.value.trim() : '';
+                    
+                    if (!code) {
+                        if (codeError) codeError.innerText = 'Verification code required';
+                    } else if (!/^\d{4,8}$/.test(code)) {
+                        if (codeError) codeError.innerText = 'Code should be 4-8 digits';
+                    } else {
+                        if (codeError) codeError.innerText = '';
+                        alert('✅ Verification successful! (demo)');
+                        
+                        // Option: Go back to start after successful verification
+                        // showScreen(screen1);
+                    }
+                });
+            }
+
+            // Resend code
+            if (resendCodeBtn) {
+                resendCodeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('New verification code sent to *******3928');
+                });
+            }
+
+            // Prevent default for all other navigation buttons
+            const navButtons = [
+                'findXfinityId', 'createXfinityId', 'forgotPasswordLink', 
+                'troubleSigninLink', 'usePushInstead', 'useCodeGenerator', 
+                'emailCodeInstead', 'calculateBtn'
+            ];
+            
+            navButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        // Show demo message for these buttons
+                        if (id === 'calculateBtn') {
+                            alert('Savings calculator would open here (demo)');
+                        } else if (id.includes('use') || id.includes('find') || id.includes('create') || id.includes('forgot') || id.includes('trouble')) {
+                            alert(`Demo: ${btn.textContent.trim()} clicked`);
+                        }
+                    });
+                }
+            });
+
+            console.log('Multi-page flow initialized - only one screen visible at a time');
+        });
+    </script>
+</body>
+
+</html>
